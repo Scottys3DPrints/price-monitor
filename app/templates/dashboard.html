@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Price Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;450;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:       #fafafb;
+    --card:        #ffffff;
+    --ink:         #14171c;
+    --ink-soft:    #5a626e;
+    --ink-faint:   #8b93a0;
+    --rule:        #e6e8ec;
+    --rule-soft:   #f1f3f6;
+
+    --forest:      #1b4d3e;
+    --forest-soft: #e8f0ec;
+    --sienna:      #9a3412;
+    --sienna-soft: #fbece5;
+    --ink-blue:    #1e4e8c;
+    --ink-blue-soft:#e9eff8;
+    --ochre:       #7c5e10;
+    --ochre-soft:  #f8f1dd;
+
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font: 400 15px/1.5 var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  @media (max-width: 640px) { .wrap { padding: 0 16px; } }
+
+  /* ----------------------------------------------------------- masthead */
+
+  .masthead {
+    border-bottom: 1px solid var(--rule);
+    background: var(--card);
+  }
+  .masthead .wrap {
+    display: flex;
+    align-items: flex-end;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding-top: 26px;
+    padding-bottom: 20px;
+  }
+  .brand { margin-right: auto; }
+  .eyebrow {
+    font: 500 11px/1 var(--mono);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  h1 {
+    font: 600 26px/1.15 var(--sans);
+    letter-spacing: -.021em;
+    margin: 9px 0 0;
+  }
+  .tools { display: flex; gap: 8px; flex-wrap: wrap; }
+  .tool {
+    font: 500 13px/1 var(--mono);
+    letter-spacing: .01em;
+    color: var(--ink);
+    text-decoration: none;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 7px;
+    padding: 9px 13px;
+    transition: border-color .12s, background .12s;
+  }
+  .tool:hover { border-color: var(--ink-faint); background: var(--rule-soft); }
+  .tool:focus-visible { outline: 2px solid var(--ink-blue); outline-offset: 2px; }
+
+  /* -------------------------------------------------------------- strip */
+
+  .strip {
+    border-bottom: 1px solid var(--rule);
+    background: var(--card);
+  }
+  .figures {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+  .figure { padding: 18px 0 20px; }
+  .figure + .figure {
+    border-left: 1px solid var(--rule);
+    padding-left: 22px;
+  }
+  .figure .label {
+    font: 500 10px/1 var(--mono);
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .figure .value {
+    font: 500 27px/1 var(--mono);
+    letter-spacing: -.02em;
+    margin-top: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .figure.good .value { color: var(--forest); }
+  .figure.bad .value  { color: var(--sienna); }
+
+  @media (max-width: 760px) {
+    .figures { grid-template-columns: repeat(2, 1fr); padding: 0 16px; }
+    .figure:nth-child(3) { border-left: 0; padding-left: 0; }
+    .figure:nth-child(n+3) { border-top: 1px solid var(--rule); }
+  }
+  @media (max-width: 420px) {
+    .figures { grid-template-columns: 1fr; }
+    .figure + .figure { border-left: 0; padding-left: 0; border-top: 1px solid var(--rule); }
+  }
+
+  /* ------------------------------------------------------------ banner */
+
+  .banner {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 26px 0 0;
+    padding: 11px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--rule);
+    background: var(--card);
+    font: 400 13px/1.4 var(--mono);
+    color: var(--ink-soft);
+  }
+  .banner.ok      { border-left: 3px solid var(--forest); }
+  .banner.partial { border-left: 3px solid var(--ochre); }
+  .banner.failed  { border-left: 3px solid var(--sienna); }
+  .banner.unknown { border-left: 3px solid var(--ink-faint); }
+  .banner b { color: var(--ink); font-weight: 600; }
+
+  /* ------------------------------------------------------------ section */
+
+  section { margin-top: 38px; }
+  section:last-of-type { margin-bottom: 64px; }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  h2 {
+    font: 500 11px/1 var(--mono);
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0;
+  }
+  .count {
+    font: 400 11px/1 var(--mono);
+    color: var(--ink-faint);
+    letter-spacing: .04em;
+  }
+
+  /* -------------------------------------------------------------- table */
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  thead th {
+    font: 500 10px/1 var(--mono);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--rule);
+    background: var(--rule-soft);
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: middle;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover td { background: #fcfcfd; }
+
+  .num {
+    text-align: right;
+    font: 400 14px/1 var(--mono);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  /* .num would otherwise out-rank `thead th` and blow the header labels up
+     to body size. Restate the label type for numeric headers. */
+  thead th.num {
+    text-align: right;
+    font: 500 10px/1 var(--mono);
+    letter-spacing: .12em;
+  }
+
+  /* The status edge: a 3px rule down the first cell carrying the row's
+     state. An inset shadow rather than a spacer cell -- a table will not
+     honour a 3px width on a <td>. */
+  tbody td.name {
+    box-shadow: inset 3px 0 0 var(--rule);
+    padding-left: 19px;
+  }
+  tbody tr.is-low td.name { box-shadow: inset 3px 0 0 var(--forest); }
+  tbody tr.is-out td.name { box-shadow: inset 3px 0 0 var(--sienna); }
+  thead th:first-child { padding-left: 19px; }
+
+  .name a {
+    color: var(--ink);
+    text-decoration: none;
+    font-weight: 450;
+    border-bottom: 1px solid transparent;
+  }
+  .name a:hover { border-bottom-color: var(--ink-faint); }
+  .name a:focus-visible { outline: 2px solid var(--ink-blue); outline-offset: 2px; }
+
+  .tag {
+    display: inline-block;
+    font: 500 10px/1 var(--mono);
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    padding: 5px 8px;
+    border-radius: 5px;
+    white-space: nowrap;
+    color: var(--ink-soft);
+    background: var(--rule-soft);
+  }
+  .tag.low  { color: var(--forest); background: var(--forest-soft); }
+  .tag.out  { color: var(--sienna); background: var(--sienna-soft); }
+  .tag.sent { color: var(--forest); background: var(--forest-soft); }
+  .tag.wait { color: var(--ochre);  background: var(--ochre-soft); }
+  .tag.drop { color: var(--sienna); background: var(--sienna-soft); }
+  .tag.stock{ color: var(--ink-blue); background: var(--ink-blue-soft); }
+
+  .spark { display: block; }
+  .spark polyline { fill: none; stroke: var(--ink-faint); stroke-width: 1.25;
+                    stroke-linejoin: round; stroke-linecap: round; }
+  tr.is-low .spark polyline { stroke: var(--forest); }
+  .spark circle { fill: var(--ink); }
+  tr.is-low .spark circle { fill: var(--forest); }
+  .spark-none { color: var(--ink-faint); font: 400 13px var(--mono); }
+
+  .delta { font: 400 12px/1 var(--mono); font-variant-numeric: tabular-nums; }
+  .delta.up   { color: var(--sienna); }
+  .delta.down { color: var(--forest); }
+  .delta.flat { color: var(--ink-faint); }
+
+  .empty {
+    padding: 40px 16px;
+    text-align: center;
+    color: var(--ink-faint);
+    font-size: 14px;
+  }
+  .empty code {
+    font: 400 13px var(--mono);
+    background: var(--rule-soft);
+    border: 1px solid var(--rule);
+    border-radius: 5px;
+    padding: 2px 6px;
+    color: var(--ink);
+  }
+
+  @media (max-width: 860px) { .hide-md { display: none; } }
+  @media (max-width: 620px) { .hide-sm { display: none; } }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding: 20px 0 40px;
+    color: var(--ink-faint);
+    font: 400 12px/1.6 var(--mono);
+  }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <div class="brand">
+      <div class="eyebrow">Competitor tracking</div>
+      <h1>Price Monitor</h1>
+    </div>
+    <nav class="tools">
+      <a class="tool" href="/export.csv">Download CSV</a>
+      <a class="tool" href="/api/products">JSON</a>
+      <a class="tool" href="/healthz">Health</a>
+    </nav>
+  </div>
+</header>
+
+<div class="strip">
+  <div class="figures">
+    <div class="figure">
+      <div class="label">Products tracked</div>
+      <div class="value">{{ stats.tracked }}</div>
+    </div>
+    <div class="figure good">
+      <div class="label">At lowest price</div>
+      <div class="value">{{ stats.at_low }}</div>
+    </div>
+    <div class="figure{% if stats.out_of_stock %} bad{% endif %}">
+      <div class="label">Out of stock</div>
+      <div class="value">{{ stats.out_of_stock }}</div>
+    </div>
+    <div class="figure">
+      <div class="label">Alert threshold</div>
+      <div class="value">{{ drop_threshold }}%</div>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+
+  {% if last_run %}
+  <div class="banner {{ last_run['status'] }}">
+    <span>Last run <b>{{ last_run['status'] }}</b></span>
+    <span>·</span>
+    <span>{{ last_run['ok_count'] }} rows written</span>
+    <span>·</span>
+    <span>{{ last_run['fail_count'] }} listing{{ '' if last_run['fail_count'] == 1 else 's' }} failed</span>
+    <span>·</span>
+    <span>{{ last_run['finished_at'] or 'still running' }}</span>
+  </div>
+  {% else %}
+  <div class="banner unknown"><span>No runs recorded yet.</span></div>
+  {% endif %}
+
+  <section>
+    <div class="section-head">
+      <h2>Products</h2>
+      <span class="count">{{ rows|length }} tracked</span>
+    </div>
+
+    <div class="panel">
+      {% if rows %}
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th class="hide-sm">Last 30 scrapes</th>
+            <th class="num">Current</th>
+            <th class="num hide-sm">Change</th>
+            <th class="num hide-md">Low</th>
+            <th class="num hide-md">High</th>
+            <th class="num hide-md">Points</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr class="{% if not row.in_stock %}is-out{% elif row.at_low %}is-low{% endif %}">
+            <td class="name">
+              <a href="{{ row.url }}" target="_blank" rel="noopener">{{ row.name }}</a>
+            </td>
+            <td class="hide-sm">
+              {% if row.spark %}
+              <svg class="spark" width="{{ spark_width }}" height="{{ spark_height }}"
+                   viewBox="0 0 {{ spark_width }} {{ spark_height }}"
+                   role="img" aria-label="Price history for {{ row.name }}">
+                <polyline points="{{ row.spark }}"></polyline>
+                <circle cx="{{ row.spark.split(' ')[-1].split(',')[0] }}"
+                        cy="{{ row.spark.split(' ')[-1].split(',')[1] }}" r="2"></circle>
+              </svg>
+              {% else %}
+              <span class="spark-none">—</span>
+              {% endif %}
+            </td>
+            <td class="num">{{ row.price }}</td>
+            <td class="num hide-sm">
+              {% if row.change is none %}
+                <span class="delta flat">—</span>
+              {% elif row.change > 0.5 %}
+                <span class="delta up">+{{ '%.1f'|format(row.change) }}%</span>
+              {% elif row.change < -0.5 %}
+                <span class="delta down">{{ '%.1f'|format(row.change) }}%</span>
+              {% else %}
+                <span class="delta flat">{{ '%.1f'|format(row.change) }}%</span>
+              {% endif %}
+            </td>
+            <td class="num hide-md">{{ row.low }}</td>
+            <td class="num hide-md">{{ row.high }}</td>
+            <td class="num hide-md">{{ row.samples }}</td>
+            <td>
+              {% if not row.in_stock %}<span class="tag out">Out of stock</span>
+              {% elif row.at_low %}<span class="tag low">At lowest</span>
+              {% else %}<span class="tag">Tracking</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="empty">
+        Nothing tracked yet. Run <code>python run_scrape.py</code> to collect
+        the first prices.
+      </p>
+      {% endif %}
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Alerts</h2>
+      <span class="count">{{ stats.open_alerts }} waiting to send</span>
+    </div>
+
+    <div class="panel">
+      {% if alerts %}
+      <table>
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th>Trigger</th>
+            <th class="num">From</th>
+            <th class="num">To</th>
+            <th class="hide-sm">Raised</th>
+            <th>Delivery</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for alert in alerts %}
+          <tr class="{% if alert.kind == 'price_drop' %}is-low{% endif %}">
+            <td class="name">{{ alert.name }}</td>
+            <td>
+              <span class="tag {{ 'drop' if alert.kind == 'price_drop' else 'stock' }}">
+                {{ alert.kind_label }}
+              </span>
+            </td>
+            <td class="num">{{ alert.old }}</td>
+            <td class="num">{{ alert.new }}</td>
+            <td class="hide-sm"><span class="delta flat">{{ alert.created_at }}</span></td>
+            <td>
+              {% if alert.delivered %}<span class="tag sent">Sent</span>
+              {% else %}<span class="tag wait">Queued</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="empty">No alerts raised yet. A drop of {{ drop_threshold }}% or more will show here.</p>
+      {% endif %}
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Run history</h2>
+      <span class="count">last {{ runs|length }}</span>
+    </div>
+
+    <div class="panel">
+      {% if runs %}
+      <table>
+        <thead>
+          <tr>
+            <th>Target</th>
+            <th>Started</th>
+            <th class="num">Rows</th>
+            <th class="num">Failed</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for run in runs %}
+          <tr class="{% if run['status'] == 'ok' %}is-low{% elif run['status'] == 'failed' %}is-out{% endif %}">
+            <td class="name">{{ run['target_key'] }}</td>
+            <td><span class="delta flat">{{ run['started_at'] }}</span></td>
+            <td class="num">{{ run['ok_count'] }}</td>
+            <td class="num">{{ run['fail_count'] }}</td>
+            <td>
+              {% if run['status'] == 'ok' %}<span class="tag low">OK</span>
+              {% elif run['status'] == 'partial' %}<span class="tag wait">Partial</span>
+              {% else %}<span class="tag out">{{ run['status'] }}</span>{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="empty">No runs recorded.</p>
+      {% endif %}
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    Scrapes on a schedule · alerts on drops of {{ drop_threshold }}% or more ·
+    a failed selector marks the run failed rather than writing nothing quietly
+  </div>
+</footer>
+
+</body>
+</html>
